@@ -7,35 +7,54 @@ from openai import OpenAI
 st.set_page_config(page_title="AI 塔罗神殿", page_icon="🔮")
 # --- 注入 CSS 样式开始 ---
 st.markdown(
+   st.markdown(
     """
     <style>
-    /* 1. 整个背景变深紫色 */
+    /* 1. 强制全局背景和文字 */
     .stApp {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        background-color: #0e1117 !important;
     }
     
-    /* 2. 所有文字颜色变成淡紫色/白色 */
-    h1, h2, h3, p, span, div {
-        color: #e0e0e0 !important;
+    /* 2. 彻底抹除所有输入框区域的白色背景 */
+    div[data-baseweb="input"], 
+    div[data-baseweb="base-input"],
+    .stTextInput>div>div {
+        background-color: #1a1c24 !important;
+        border: 1px solid #d4af37 !important;
     }
 
-    /* 3. 修改输入框和卡片样式 */
-    .stTextInput>div>div>input {
-        background-color: #0f3460;
-        color: white;
-        border: 1px solid #d69dfb;
+    /* 3. 确保输入框内的文字也是亮的 */
+    input {
+        color: #d4af37 !important;
     }
 
-    /* 4. 修改那个闪亮的抽牌按钮 */
+    /* 4. 标题和所有文字颜色 */
+    h1, h2, h3, p, label, .stMarkdown {
+        color: #f0f0f0 !important;
+    }
+
+    /* 5. 按钮样式：黑底金边 */
     .stButton>button {
-        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 25px;
+        background-color: #1a1c24 !important;
+        color: #d4af37 !important;
+        border: 2px solid #d4af37 !important;
+        width: 100%;
+        border-radius: 5px;
         font-weight: bold;
-        transition: 0.3s;
     }
+    .stButton>button:hover {
+        background-color: #d4af37 !important;
+        color: #0e1117 !important;
+    }
+
+    /* 6. 隐藏 Streamlit 顶部的装饰条 */
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
     .stButton>button:hover {
         transform: scale(1.05);
         box-shadow: 0 0 15px #6a11cb;
