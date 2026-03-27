@@ -71,4 +71,62 @@ def get_deepseek_interpretation(question, cards_list):
     st.subheader("💡 占卜师直言")
     try:
         api_key = st.secrets["DEEPSEEK_API_KEY"]
-        client = OpenAI(api_key=api_
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        
+        # 整理牌阵信息传给 AI
+        prompt_cards = ""
+        for c in cards_list:
+            prompt_cards += f"{c['pos']}: {c['name']} ({c['status']})\n"
+        
+        system_msg = "你是一位毒舌犀利、拒绝套话的塔罗师。直接说本质和阻碍，给具体建议，禁止废话，200字左右。"
+        user_msg = f"问题：【{question}】\n牌阵：\n{prompt_cards}\n请解读。"
+
+        with st.spinner('看透真相中...'):
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
+                temperature=0.8
+            )
+        st.markdown(response.choices[0].message.content)
+    except Exception as e:
+        st.error(f"失败：请确认 Streamlit Secrets 里配置了 DEEPSEEK_API_KEY。具体错误：{e}")
+
+# 4. 页面交互
+user_question = st.text_input("输入你的困惑：")
+
+if st.button("✨ 开启真相之门 ✨"):
+    if not user_question:
+        st.warning("请先输入问题。")
+    else:
+        with st.spinner('正在洗牌...'):
+            time.sleep(1)
+        
+        # 抽取三张牌
+        drawn_names = random.sample(list(MAJOR_ARCANA.keys()), 3)
+        spread_labels = ["【过去/根源】", "【现状/阻碍】", "【建议/指引】"]
+        
+        final_cards_for_ai = []
+        cols = st.columns(3)
+        
+        for i in range(3):
+            with cols[i]:
+                name = drawn_names[i]
+                status = random.choice(["正位", "逆位"])
+                meaning = MAJOR_ARCANA[name][status]
+                
+                # 存入列表传给 AI
+                final_cards_for_ai.append({
+                    "pos": spread_labels[i],
+                    "name": name,
+                    "status": status
+                })
+                
+                # 界面显示
+                st.markdown(f"**{spread_labels[i]}**")
+                st.markdown(f"### {name}")
+                st.write(f"{'**正位** ⬆️' if status == '正位' else '**逆位** ⬇️'}")
+                st.markdown(f"<p style='color:#d4af37; font-style:italic;'>{meaning}</p>", unsafe_allow_html=True)
+        
+        # 调用解读
+        get_deepseek_interpretation(user_question, final_cards_for_ai)
+        st.balloons()
