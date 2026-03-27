@@ -6,19 +6,11 @@ from openai import OpenAI
 # 1. 界面与配置
 st.set_page_config(page_title="AI 塔罗神殿", page_icon="🔮")
 
-# --- 私货：开屏爱豆闪现 (3秒后自动消失) ---
-# 注意：这里直接引用了你上传的图片在 Streamlit 部署后的相对路径逻辑，
-# 如果在本地运行，请确保图片文件名为 idol.jpg 并放在同级目录
+# --- 注入 CSS 样式 ---
 st.markdown(
     """
-    <div id="splash-screen">
-        <div class="content">
-            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/10abb0d1c3f7bf9dcbae406c91ef9645.jpeg">
-            <p>✨ 正在链接宇宙能量... ✨</p>
-        </div>
-    </div>
-
     <style>
+    /* 开屏闪现层 */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -35,7 +27,6 @@ st.markdown(
         border: 2px solid #d4af37;
         box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
     }
-    .content p { color: #d4af37; margin-top: 20px; font-size: 1.2em; font-weight: bold; }
     
     @keyframes fadeOut {
         0% { opacity: 1; }
@@ -43,7 +34,7 @@ st.markdown(
         100% { opacity: 0; visibility: hidden; }
     }
 
-    /* 2. 基础界面样式 */
+    /* 基础界面样式 */
     .stApp { background-color: #0e1117 !important; }
     div[data-baseweb="input"], div[data-baseweb="base-input"], .stTextInput>div>div {
         background-color: #1a1c24 !important;
@@ -67,6 +58,20 @@ st.markdown(
     header {visibility: hidden;}
     footer {visibility: hidden;}
     </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- 展示图片逻辑 ---
+# 这里尝试读取你上传到 GitHub 的图片，请确保文件名叫 idol.jpg
+st.markdown(
+    """
+    <div id="splash-screen">
+        <div class="content">
+            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/idol.jpg" onerror="this.parentElement.innerHTML='<p style=\'color:#d4af37\'>✨ 能量加载中... ✨</p>'">
+            <p style="color: #d4af37; margin-top: 20px; font-weight: bold;">✨ 正在链接宇宙能量... ✨</p>
+        </div>
+    </div>
     """,
     unsafe_allow_html=True
 )
@@ -111,7 +116,6 @@ def get_deepseek_interpretation(question, cards_list):
         for c in cards_list:
             prompt_cards += f"{c['pos']}: {c['name']} ({c['status']})\n"
         
-        # 你的“私货”需求：犀利、直白、拒绝套话
         system_msg = """你是一位毒舌犀利、拒绝套话的塔罗师。
         1. 禁止使用“星辰、能量、宇宙、灵性”等废话。
         2. 直接点破局面的本质和死穴。
@@ -128,7 +132,7 @@ def get_deepseek_interpretation(question, cards_list):
             )
         st.markdown(response.choices[0].message.content)
     except Exception as e:
-        st.error(f"失败：请检查 Secrets 里的 API Key。具体错误：{e}")
+        st.error(f"失败：请确保 Secrets 里的 API Key 配置正确。")
 
 # 4. 页面交互
 user_question = st.text_input("输入你的困惑：")
