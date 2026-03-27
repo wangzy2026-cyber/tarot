@@ -62,13 +62,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- 展示图片逻辑 ---
-# 这里尝试读取你上传到 GitHub 的图片，请确保文件名叫 idol.jpg
+# --- 爱豆开屏照片 (根据你的仓库路径动态生成) ---
 st.markdown(
     """
     <div id="splash-screen">
         <div class="content">
-            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/idol.jpg" onerror="this.parentElement.innerHTML='<p style=\'color:#d4af37\'>✨ 能量加载中... ✨</p>'">
+            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/10abb0d1c3f7bf9dcbae406c91ef9645.jpeg?v=1" onerror="this.style.display='none'">
             <p style="color: #d4af37; margin-top: 20px; font-weight: bold;">✨ 正在链接宇宙能量... ✨</p>
         </div>
     </div>
@@ -98,7 +97,7 @@ MAJOR_ARCANA = {
     "恶魔 (The Devil)": {"正位": "束缚、欲望", "逆位": "释放、觉醒"},
     "高塔 (The Tower)": {"正位": "剧变、真相", "逆位": "延迟灾难、害怕"},
     "星星 (The Star)": {"正位": "希望、灵感、宁静", "逆位": "失望、迷茫"},
-    "月亮 (The Moon)": {"正位": "不安、幻觉", "逆位": "释怀、看清真相"},
+    "月亮 (The Moon)": {"正位": "不安、幻觉、潜意识", "逆位": "释怀、看清真相"},
     "太阳 (The Sun)": {"正位": "快乐、成功", "逆位": "暂时受挫、乐观过度"},
     "审判 (Judgement)": {"正位": "觉醒、重生", "逆位": "怀疑、拒绝召唤"},
     "世界 (The World)": {"正位": "圆满、整合", "逆位": "未竟之志、停滞"}
@@ -116,15 +115,18 @@ def get_deepseek_interpretation(question, cards_list):
         for c in cards_list:
             prompt_cards += f"{c['pos']}: {c['name']} ({c['status']})\n"
         
-        system_msg = """你是一位毒舌犀利、拒绝套话的塔罗师。
-        1. 禁止使用“星辰、能量、宇宙、灵性”等废话。
-        2. 直接点破局面的本质和死穴。
-        3. 给出具体的行动建议。
-        4. 总字数200字内。"""
+        # 核心指令：切断网络联想，只看牌面
+        system_msg = """你是一位完全中立、冷酷、拒绝废话的塔罗分析师。
+        你的原则是：
+        1. 严禁联网查询或引用任何关于现实人物（如明星、艺人、公众人物）的网络八卦、生平或评价。
+        2. 你的解读必须完全、唯一、仅仅来源于当前抽到的【牌面意义】及其【正逆位】。
+        3. 不要说“可能、大概、似乎”，直接点破死穴，给出硬核建议。
+        4. 拒绝使用“星辰、能量、宇宙、灵性”等玄学套话。
+        5. 总字数控制在200字内，排版清晰。"""
         
-        user_msg = f"问题：【{question}】\n牌阵：\n{prompt_cards}\n请解读。"
+        user_msg = f"问题：【{question}】\n牌阵：\n{prompt_cards}\n请完全基于以上牌义，不要联想任何网络已知信息，给出最纯粹的解读。"
 
-        with st.spinner('看透真相中...'):
+        with st.spinner('切断外部干扰，深入牌阵...'):
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
@@ -132,7 +134,7 @@ def get_deepseek_interpretation(question, cards_list):
             )
         st.markdown(response.choices[0].message.content)
     except Exception as e:
-        st.error(f"失败：请确保 Secrets 里的 API Key 配置正确。")
+        st.error(f"解读中断，请检查设置。")
 
 # 4. 页面交互
 user_question = st.text_input("输入你的困惑：")
