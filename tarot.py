@@ -48,15 +48,7 @@ st.markdown(
         box-shadow: 0 0 15px #6a11cb;
     }
 
-    /* 5. 卡片样式 */
-    .stInfo {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid #d69dfb !important;
-        border-radius: 10px !important;
-        color: #f0f0f0 !important;
-    }
-
-    /* 6. 隐藏页眉页脚 */
+    /* 5. 隐藏页眉页脚 */
     header {visibility: hidden;}
     footer {visibility: hidden;}
     </style>
@@ -75,7 +67,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.write("")
 
-# 2. 核心牌库 (补全了 22 张大阿卡纳)
+# 2. 核心牌库
 MAJOR_ARCANA = {
     "愚者 (The Fool)": {"正位": "新的开始、自发性、信念的飞跃", "逆位": "鲁莽、停滞、糟糕的决定"},
     "魔术师 (The Magician)": {"正位": "显化、资源充足、力量", "逆位": "操控、规划不周、未开发的潜力"},
@@ -104,65 +96,37 @@ MAJOR_ARCANA = {
 # 3. 连接 DeepSeek 大脑
 def get_deepseek_interpretation(question, drawn_cards_info):
     st.write("---")
-    st.subheader("💡 DeepSeek 占卜师的深度指引")
+    st.subheader("💡 占卜师直言")
     
     try:
         api_key = st.secrets["DEEPSEEK_API_KEY"]
     except Exception:
-        st.error("⚠️ 占卜师失联：系统未配置 API Key。请在 Streamlit Secrets 中设置。")
+        st.error("⚠️ 密钥未配置，请在 Streamlit Secrets 中设置 DEEPSEEK_API_KEY")
         return
 
     cards_text = ""
     for card in drawn_cards_info:
-        cards_text += f"- {card['pos']}：{card['name']} ({card['orientation']})，核心释义：{card['keywords']}\n"
+        cards_text += f"- {card['pos']}：{card['name']} ({card['orientation']})\n"
     
-    system_prompt = "你是一位富有洞察力的专业塔罗占卜师。请根据用户的问题和牌阵进行深度解读，字数约500字，风格优雅神秘。"
-    user_prompt = f"问题：【{question}】\n牌阵：\n{cards_text}\n请解读。"
+    # 修改后的提示词：拒绝废话版本
+    system_prompt = """
+    你是一位言辞犀利、一针见血的职业塔罗占卜师。
+    你的解读要求：
+    1. 拒绝任何“宇宙、星辰、能量”等虚无缥缈的废话套话。
+    2. 直接点出问题的核心本质和当前的阻碍。
+    3. 给出1-2条具体的、可执行的行动建议。
+    4. 语气要像个睿智的朋友在说大白话。
+    5. 总字数控制在 250 字左右，排版清晰。
+    """
+    user_prompt = f"问题：【{question}】\n牌阵：\n{cards_text}\n请直接给出最干货的解读。"
 
     try:
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-        with st.spinner('DeepSeek 正在解析星象与数据洪流...'):
+        with st.spinner('正在看透真相...'):
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7 
-            )
-        st.markdown(response.choices[0].message.content)
-    except Exception as e:
-        st.error(f"接口干扰：{e}")
-
-# 4. 交互逻辑
-user_question = st.text_input("你想问什么问题？（例如：我的求职面试会顺利吗？）")
-
-if st.button("✨ 确认问题，点击抽牌 ✨"):
-    if not user_question:
-        st.warning("请先输入你的困惑。")
-    else:
-        with st.spinner('正在洗牌...'):
-            time.sleep(1)
-            
-        st.success(f"关于【{user_question}】，你的指引如下：")
-        
-        spread_info = ["【过去 / 基础】", "【现在 / 挑战】", "【未来 / 指引】"]
-        drawn_cards_data = []
-        drawn_card_names = random.sample(list(MAJOR_ARCANA.keys()), 3)
-        
-        cols = st.columns(3)
-        for i, col in enumerate(cols):
-            with col:
-                name = drawn_card_names[i]
-                orient = random.choice(["正位", "逆位"])
-                keys = MAJOR_ARCANA[name][orient]
-                
-                drawn_cards_data.append({"pos": spread_info[i], "name": name, "orientation": orient, "keywords": keys})
-                
-                st.markdown(f"**{spread_info[i]}**")
-                st.markdown(f"### {name}")
-                st.write(f"状态：{'**正位** ⬆️' if orient == '正位' else '**逆位** ⬇️'}")
-                st.info(f"{keys}")
-        
-        get_deepseek_interpretation(user_question, drawn_cards_data)
-        st.balloons()
+                temperature=0.
