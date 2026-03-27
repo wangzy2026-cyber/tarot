@@ -7,7 +7,6 @@ from openai import OpenAI
 st.set_page_config(page_title="AI 塔罗神殿", page_icon="🔮")
 # --- 注入 CSS 样式开始 ---
 st.markdown(
-   st.markdown(
     """
     <style>
     /* 1. 强制全局背景和文字 */
