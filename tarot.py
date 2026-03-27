@@ -6,11 +6,10 @@ from openai import OpenAI
 # 1. 界面与配置
 st.set_page_config(page_title="AI 塔罗神殿", page_icon="🔮")
 
-# --- 注入 CSS 样式 ---
+# --- 注入 CSS 样式 (保留爱豆开屏逻辑) ---
 st.markdown(
     """
     <style>
-    /* 开屏闪现层 */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -27,16 +26,13 @@ st.markdown(
         border: 2px solid #d4af37;
         box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
     }
-    
     @keyframes fadeOut {
         0% { opacity: 1; }
         80% { opacity: 1; }
         100% { opacity: 0; visibility: hidden; }
     }
-
-    /* 基础界面样式 */
     .stApp { background-color: #0e1117 !important; }
-    div[data-baseweb="input"], div[data-baseweb="base-input"], .stTextInput>div>div {
+    div[data-baseweb="input"], .stTextInput>div>div {
         background-color: #1a1c24 !important;
         border: 1px solid #d4af37 !important;
     }
@@ -50,106 +46,101 @@ st.markdown(
         border-radius: 5px;
         font-weight: bold;
     }
-    .stButton>button:hover {
-        background-color: #d4af37 !important;
-        color: #0e1117 !important;
-        box-shadow: 0 0 15px #6a11cb;
-    }
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
+    header, footer {visibility: hidden;}
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# --- 爱豆开屏照片 (根据你的仓库路径动态生成) ---
+# --- 图片显示逻辑 (确保链接准确) ---
 st.markdown(
     """
     <div id="splash-screen">
         <div class="content">
-            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/10abb0d1c3f7bf9dcbae406c91ef9645.jpeg?v=1" onerror="this.style.display='none'">
-            <p style="color: #d4af37; margin-top: 20px; font-weight: bold;">✨ 正在链接宇宙能量... ✨</p>
+            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/10abb0d1c3f7bf9dcbae406c91ef9645.jpeg" onerror="this.style.display='none'">
+            <p style="color: #d4af37; margin-top: 20px; font-weight: bold;">✨ 能量加载中... ✨</p>
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-st.title("🔮 AI 塔罗神殿：智慧之眼")
+st.title("🔮 AI 塔罗神殿：逻辑与智慧")
 
 # 2. 核心牌库
 MAJOR_ARCANA = {
-    "愚者 (The Fool)": {"正位": "新的开始、信念、冒险", "逆位": "鲁莽、停滞、盲目"},
-    "魔术师 (The Magician)": {"正位": "显化、力量、行动", "逆位": "操控、怀才不遇"},
-    "女祭司 (The High Priestess)": {"正位": "直觉、潜意识", "逆位": "肤浅、忽略内心"},
-    "女皇 (The Empress)": {"正位": "丰饶、母性", "逆位": "缺乏安全感、过度依赖"},
-    "皇帝 (The Emperor)": {"正位": "权威、稳固", "逆位": "暴政、死板"},
-    "教皇 (The Hierophant)": {"正位": "传统、引导", "逆位": "叛逆、新观念"},
-    "恋人 (The Lovers)": {"正位": "爱、和谐", "逆位": "失衡、错误选择"},
-    "战车 (The Chariot)": {"正位": "胜利、意志", "逆位": "失控、攻击性"},
-    "力量 (Strength)": {"正位": "勇气、耐心", "逆位": "自我怀疑、软弱"},
-    "隐士 (The Hermit)": {"正位": "内省、真理", "逆位": "孤立、逃避"},
-    "命运之轮 (Wheel of Fortune)": {"正位": "转折、好运", "逆位": "时运不济、抗拒"},
-    "正义 (Justice)": {"正位": "公平、责任", "逆位": "不公、逃避"},
-    "倒吊人 (The Hanged Man)": {"正位": "换位思考、牺牲", "逆位": "拖延、无谓付出"},
-    "死神 (Death)": {"正位": "终结、新生", "逆位": "抗拒、停滞"},
-    "节制 (Temperance)": {"正位": "平衡、适度", "逆位": "失衡、极端"},
-    "恶魔 (The Devil)": {"正位": "束缚、欲望", "逆位": "释放、觉醒"},
-    "高塔 (The Tower)": {"正位": "剧变、真相", "逆位": "延迟灾难、害怕"},
-    "星星 (The Star)": {"正位": "希望、灵感、宁静", "逆位": "失望、迷茫"},
-    "月亮 (The Moon)": {"正位": "不安、幻觉、潜意识", "逆位": "释怀、看清真相"},
-    "太阳 (The Sun)": {"正位": "快乐、成功", "逆位": "暂时受挫、乐观过度"},
-    "审判 (Judgement)": {"正位": "觉醒、重生", "逆位": "怀疑、拒绝召唤"},
-    "世界 (The World)": {"正位": "圆满、整合", "逆位": "未竟之志、停滞"}
+    "愚者 (The Fool)": {"正位": "新的开始、纯粹、冒险", "逆位": "鲁莽、缺乏计划、停滞"},
+    "魔术师 (The Magician)": {"正位": "创造力、掌控资源、行动", "逆位": "沟通不畅、能力错配"},
+    "女祭司 (The High Priestess)": {"正位": "直觉、潜意识、等待", "逆位": "表象迷惑、忽视内心"},
+    "女皇 (The Empress)": {"正位": "丰饶、生命力、感性", "逆位": "过度控制、缺乏安全感"},
+    "皇帝 (The Emperor)": {"正位": "秩序、权威、理性", "逆位": "专制、死板、失控"},
+    "教皇 (The Hierophant)": {"正位": "传统、导师、共识", "逆位": "打破常规、不信任"},
+    "恋人 (The Lovers)": {"正位": "选择、和谐、吸引", "逆位": "价值观冲突、失衡"},
+    "战车 (The Chariot)": {"正位": "意志胜利、自律、前进", "逆位": "方向模糊、攻击性、失控"},
+    "力量 (Strength)": {"正位": "内在勇气、柔韧、自控", "逆位": "自我怀疑、软弱、急躁"},
+    "隐士 (The Hermit)": {"get_deepseek_interpretation": "内省、真理、孤独", "逆位": "孤立、逃避现实"},
+    "命运之轮 (Wheel of Fortune)": {"正位": "周期、契机、不可抗力", "逆位": "时机未到、抗拒变化"},
+    "正义 (Justice)": {"正位": "公平、因果、真相", "逆位": "失衡、不负责、偏见"},
+    "倒吊人 (The Hanged Man)": {"正位": "牺牲、换位思考、暂停", "逆位": "无谓挣扎、拖延"},
+    "死神 (Death)": {"正位": "彻底终结、蜕变、新生", "逆位": "抗拒改变、勉强维持"},
+    "节制 (Temperance)": {"正位": "平衡、融合、适度", "逆位": "失调、极端、冲突"},
+    "恶魔 (The Devil)": {"正位": "束缚、物质欲望、执念", "逆位": "觉醒、解脱、意识到真相"},
+    "高塔 (The Tower)": {"正位": "剧变、幻象破灭、冲击", "逆位": "延迟的崩溃、恐惧变化"},
+    "星星 (The Star)": {"正位": "希望、疗愈、灵感", "逆位": "失望、迷茫、悲观"},
+    "月亮 (The Moon)": {"正位": "不安、潜意识、幻觉", "逆位": "看清真相、恐惧消除"},
+    "太阳 (The Sun)": {"正位": "明亮、成功、活力", "逆位": "暂时阴云、过度乐观"},
+    "审判 (Judgement)": {"正位": "觉醒、反省、因果裁决", "逆位": "自我怀疑、逃避审视"},
+    "世界 (The World)": {"正位": "圆满、整合、终点", "逆位": "未竟之志、停滞不前"}
 }
 
-# 3. 解读函数
+# 3. 核心解读函数（客观深刻版）
 def get_deepseek_interpretation(question, cards_list):
     st.write("---")
-    st.subheader("💡 占卜师直言")
+    st.subheader("💡 牌面深度解析")
     try:
         api_key = st.secrets["DEEPSEEK_API_KEY"]
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
         
-        prompt_cards = ""
-        for c in cards_list:
-            prompt_cards += f"{c['pos']}: {c['name']} ({c['status']})\n"
+        cards_info = "\n".join([f"{c['pos']}：{c['name']}（{c['status']}）" for c in cards_list])
         
-        # 核心指令：切断网络联想，只看牌面
-        system_msg = """你是一位完全中立、冷酷、拒绝废话的塔罗分析师。
-        你的原则是：
-        1. 严禁联网查询或引用任何关于现实人物（如明星、艺人、公众人物）的网络八卦、生平或评价。
-        2. 你的解读必须完全、唯一、仅仅来源于当前抽到的【牌面意义】及其【正逆位】。
-        3. 不要说“可能、大概、似乎”，直接点破死穴，给出硬核建议。
-        4. 拒绝使用“星辰、能量、宇宙、灵性”等玄学套话。
-        5. 总字数控制在200字内，排版清晰。"""
+        # 强制性 Prompt：追求逻辑深度，屏蔽网络干扰
+        system_msg = """你是一位严谨、深刻且客观的塔罗逻辑分析师。
+        你的原则：
+        1. 【绝对切断网络】：严禁根据现实中的人物名（如明星）、事件名去联网检索。你的所有判断必须源于牌阵本身。
+        2. 【深度关联】：将牌面的经典意象与用户的问题进行本质上的链接。
+        3. 【拒绝平庸】：不要给出“一切都会好起来”这种废话，要指出事物运行的底层逻辑。
+        4. 【输出结构】：
+           - 【牌阵逻辑分析】：解析三张牌之间的内在因果联系。
+           - 【核心矛盾点】：指出当前问题最深刻的阻碍点。
+           - 【策略性建议】：给出基于理性推导的应对方案。
+        字数250字左右，语气稳重、透彻。"""
         
-        user_msg = f"问题：【{question}】\n牌阵：\n{prompt_cards}\n请完全基于以上牌义，不要联想任何网络已知信息，给出最纯粹的解读。"
+        user_msg = f"用户问题：【{question}】\n当前抽取的牌阵：\n{cards_info}\n请基于牌面逻辑，给出深刻且客观的闭环分析。"
 
-        with st.spinner('切断外部干扰，深入牌阵...'):
+        with st.spinner('正在分析牌面因果链...'):
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
-                temperature=0.8
+                temperature=0.7 # 降低随机性，增加逻辑稳定性
             )
         st.markdown(response.choices[0].message.content)
     except Exception as e:
-        st.error(f"解读中断，请检查设置。")
+        st.error(f"解读连接失败。")
 
-# 4. 页面交互
-user_question = st.text_input("输入你的困惑：")
+# 4. 交互逻辑
+user_question = st.text_input("描述你的困惑：", placeholder="例如：某项具体计划的前景，或者当下的心态局势...")
 
-if st.button("✨ 开启真相之门 ✨"):
+if st.button("✨ 开启逻辑之门 ✨"):
     if not user_question:
-        st.warning("请先输入问题。")
+        st.warning("请输入问题以开启解析。")
     else:
-        with st.spinner('正在洗牌...'):
+        with st.spinner('正在构建牌阵...'):
             time.sleep(1)
         
         drawn_names = random.sample(list(MAJOR_ARCANA.keys()), 3)
         spread_labels = ["【过去/根源】", "【现状/阻碍】", "【建议/指引】"]
         
-        final_cards_for_ai = []
+        final_cards = []
         cols = st.columns(3)
         
         for i in range(3):
@@ -158,16 +149,12 @@ if st.button("✨ 开启真相之门 ✨"):
                 status = random.choice(["正位", "逆位"])
                 meaning = MAJOR_ARCANA[name][status]
                 
-                final_cards_for_ai.append({
-                    "pos": spread_labels[i],
-                    "name": name,
-                    "status": status
-                })
+                final_cards.append({"pos": spread_labels[i], "name": name, "status": status})
                 
                 st.markdown(f"**{spread_labels[i]}**")
                 st.markdown(f"### {name}")
                 st.write(f"{'**正位** ⬆️' if status == '正位' else '**逆位** ⬇️'}")
-                st.markdown(f"<p style='color:#d4af37; font-style:italic;'>{meaning}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='color:#d4af37; font-size:0.85em; font-style:italic;'>{meaning}</p>", unsafe_allow_html=True)
         
-        get_deepseek_interpretation(user_question, final_cards_for_ai)
+        get_deepseek_interpretation(user_question, final_cards)
         st.balloons()
