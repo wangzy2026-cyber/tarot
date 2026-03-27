@@ -6,10 +6,44 @@ from openai import OpenAI
 # 1. 界面与配置
 st.set_page_config(page_title="AI 塔罗神殿", page_icon="🔮")
 
-# --- 注入 CSS 样式 ---
+# --- 私货：开屏爱豆闪现 (3秒后自动消失) ---
+# 注意：这里直接引用了你上传的图片在 Streamlit 部署后的相对路径逻辑，
+# 如果在本地运行，请确保图片文件名为 idol.jpg 并放在同级目录
 st.markdown(
     """
+    <div id="splash-screen">
+        <div class="content">
+            <img src="https://raw.githubusercontent.com/W-Ziyuan/tarot/main/10abb0d1c3f7bf9dcbae406c91ef9645.jpeg">
+            <p>✨ 正在链接宇宙能量... ✨</p>
+        </div>
+    </div>
+
     <style>
+    #splash-screen {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: #0e1117;
+        display: flex; justify-content: center; align-items: center;
+        z-index: 99999;
+        animation: fadeOut 3.5s forwards;
+        pointer-events: none;
+    }
+    .content { text-align: center; }
+    .content img { 
+        max-width: 85vw; max-height: 70vh; 
+        border-radius: 20px; 
+        border: 2px solid #d4af37;
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    }
+    .content p { color: #d4af37; margin-top: 20px; font-size: 1.2em; font-weight: bold; }
+    
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; visibility: hidden; }
+    }
+
+    /* 2. 基础界面样式 */
     .stApp { background-color: #0e1117 !important; }
     div[data-baseweb="input"], div[data-baseweb="base-input"], .stTextInput>div>div {
         background-color: #1a1c24 !important;
@@ -58,8 +92,8 @@ MAJOR_ARCANA = {
     "节制 (Temperance)": {"正位": "平衡、适度", "逆位": "失衡、极端"},
     "恶魔 (The Devil)": {"正位": "束缚、欲望", "逆位": "释放、觉醒"},
     "高塔 (The Tower)": {"正位": "剧变、真相", "逆位": "延迟灾难、害怕"},
-    "星星 (The Star)": {"正位": "希望、宁静", "逆位": "失望、迷茫"},
-    "月亮 (The Moon)": {"正位": "不安、潜意识", "逆位": "释怀、看清"},
+    "星星 (The Star)": {"正位": "希望、灵感、宁静", "逆位": "失望、迷茫"},
+    "月亮 (The Moon)": {"正位": "不安、幻觉", "逆位": "释怀、看清真相"},
     "太阳 (The Sun)": {"正位": "快乐、成功", "逆位": "暂时受挫、乐观过度"},
     "审判 (Judgement)": {"正位": "觉醒、重生", "逆位": "怀疑、拒绝召唤"},
     "世界 (The World)": {"正位": "圆满、整合", "逆位": "未竟之志、停滞"}
@@ -73,12 +107,17 @@ def get_deepseek_interpretation(question, cards_list):
         api_key = st.secrets["DEEPSEEK_API_KEY"]
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
         
-        # 整理牌阵信息传给 AI
         prompt_cards = ""
         for c in cards_list:
             prompt_cards += f"{c['pos']}: {c['name']} ({c['status']})\n"
         
-        system_msg = "你是一位毒舌犀利、拒绝套话的塔罗师。直接说本质和阻碍，给具体建议，禁止废话，200字左右。"
+        # 你的“私货”需求：犀利、直白、拒绝套话
+        system_msg = """你是一位毒舌犀利、拒绝套话的塔罗师。
+        1. 禁止使用“星辰、能量、宇宙、灵性”等废话。
+        2. 直接点破局面的本质和死穴。
+        3. 给出具体的行动建议。
+        4. 总字数200字内。"""
+        
         user_msg = f"问题：【{question}】\n牌阵：\n{prompt_cards}\n请解读。"
 
         with st.spinner('看透真相中...'):
@@ -89,7 +128,7 @@ def get_deepseek_interpretation(question, cards_list):
             )
         st.markdown(response.choices[0].message.content)
     except Exception as e:
-        st.error(f"失败：请确认 Streamlit Secrets 里配置了 DEEPSEEK_API_KEY。具体错误：{e}")
+        st.error(f"失败：请检查 Secrets 里的 API Key。具体错误：{e}")
 
 # 4. 页面交互
 user_question = st.text_input("输入你的困惑：")
@@ -101,7 +140,6 @@ if st.button("✨ 开启真相之门 ✨"):
         with st.spinner('正在洗牌...'):
             time.sleep(1)
         
-        # 抽取三张牌
         drawn_names = random.sample(list(MAJOR_ARCANA.keys()), 3)
         spread_labels = ["【过去/根源】", "【现状/阻碍】", "【建议/指引】"]
         
@@ -114,19 +152,16 @@ if st.button("✨ 开启真相之门 ✨"):
                 status = random.choice(["正位", "逆位"])
                 meaning = MAJOR_ARCANA[name][status]
                 
-                # 存入列表传给 AI
                 final_cards_for_ai.append({
                     "pos": spread_labels[i],
                     "name": name,
                     "status": status
                 })
                 
-                # 界面显示
                 st.markdown(f"**{spread_labels[i]}**")
                 st.markdown(f"### {name}")
                 st.write(f"{'**正位** ⬆️' if status == '正位' else '**逆位** ⬇️'}")
                 st.markdown(f"<p style='color:#d4af37; font-style:italic;'>{meaning}</p>", unsafe_allow_html=True)
         
-        # 调用解读
         get_deepseek_interpretation(user_question, final_cards_for_ai)
         st.balloons()
